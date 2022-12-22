@@ -104,7 +104,7 @@ class Board:
 
     def checkWin(self, side):
         otherSide = 3 - side
-        otherSizePiece = self.countSide(otherSide)
+        otherSizePiece = self.countPiece(otherSide)
         if otherSizePiece == 0:
             return True
         if otherSizePiece > 2:
@@ -117,7 +117,7 @@ class Board:
                             return False
         return True
 
-    def countSide(self, side):
+    def countPiece(self, side):
         count = 0
         for i in range(0, 25):
             if self.board[i] == side:
@@ -180,10 +180,12 @@ class Board:
                         return True
         return False
             
-    def undo(self):
+    def undoMove(self):
         if len(self.saveMove) == 0:
             return
         state = self.saveMove.pop()
         self.board = state.board
         self.focusTo = state.focusTo
         self.isFocus = state.isFocus
+
+

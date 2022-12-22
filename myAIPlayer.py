@@ -10,52 +10,54 @@ class AIPlayer:
         self.bestMove = (0, 0)
 
     def makeMove(self):
-        if self.board.isFocus:
-            return self.makeMoveFocus()
-        else:
-            return self.makeMoveNotFocus()
+        canMove = self.findAvailableMoves(self.side)
+        if len(canMove) == 0:
+            return False
+        bestMove = canMove[0]
+        bestEval = -999999
+        for move in canMove:
+            self.board.move(move[0], move[1], self.side)
+            eval = self.minimax(2, False, -999999, 999999)
+            self.board.undoMove()
+            if eval > bestEval:
+                bestEval = eval
+                bestMove = move
+        return bestMove
 
-    def makeMoveFocus(self):
-        x_to = self.board.focusTo
-        for i in range(0, 25):
-            if self.board.checkValidMove(i, x_to, self.side):
-                return (i, x_to)
 
-    def minimax(self, alpha, beta, depth, side):
+    def minimax(self, depth, isMaximizing, alpha, beta):
         if depth == 0:
             return self.evaluate()
-    
+        if isMaximizing:
+            maxEval = -999999
+            for move in self.findAvailableMoves(self.side):
+                self.board.move(move[0], move[1], self.side)
+                eval = self.minimax(depth - 1, False, alpha, beta)
+                self.board.undoMove()
+                maxEval = max(maxEval, eval)
+                alpha = max(alpha, eval)
+                if beta <= alpha:
+                    break
+            return maxEval
+        else:
+            minEval = 999999
+            for move in self.findAvailableMoves(self.otherSide):
+                self.board.move(move[0], move[1], self.otherSide)
+                eval = self.minimax(depth - 1, True, alpha, beta)
+                self.board.undoMove()
+                minEval = min(minEval, eval)
+                beta = min(beta, eval)
+                if beta <= alpha:
+                    break
+            return minEval
+
+    def findAvailableMoves(self, side):
         canMove = []
-        best = -self.INTIFY
-        value = 0
-        for i in range(0, 25):
-            if self.board.board[i] == side:
-                for j in range(0, 25):
-                    if self.board.checkValidMove(i, j, side):
-                        canMove.append((i, j))
+        for i in range(25):
+            for j in range(25):
+                if self.board.checkValidMove(i, j, side):
+                    canMove.append((i, j))
+        return canMove
 
-        if len(canMove) == 0:
-            return self.evaluate()
-        
-        for move in canMove:
-            if best >= alpha:
-                alpha = best
-            if (self.board.move(move[0], move[1], side)):
-                value = -self.minimax(-beta, -alpha, depth - 1, 3 - side)
-                self.board.undo()
-            if value > best:
-                best = value
-                if depth == 3:
-                    self.bestMove = move
-        return best
-     
-
-
-   
     def evaluate(self):
-        c = self.board.countSide(self.otherSide)
-        return 10 * (2 * c - 16)
-
-    def makeMoveNotFocus(self):
-        self.minimax(-self.INTIFY, self.INTIFY, 3,self.side)
-        return self.bestMove
+        return self.board.countPiece(self.side) - self.board.countPiece(self.otherSide)
